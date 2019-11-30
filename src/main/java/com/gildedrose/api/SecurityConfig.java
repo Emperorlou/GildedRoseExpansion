@@ -14,7 +14,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         /*
         Here I want to configure the security so that anything put in the /users resource will
-        automatically be secured and require authentication. It's important that we don't rely
+        automatically be secured and require authentication. I believe it is important that we don't rely
         on people adding authentication to each resource individually as they're liable to forget.
         Having this blanket makes it simple (imo) for everyone who might want to add to this project.
          */

@@ -1,8 +1,8 @@
 package com.gildedrose.api.dbentities;
 
-import com.gildedrose.api.services.ItemService;
-import org.springframework.beans.factory.annotation.Autowired;
-
+/**
+ * This is the class that holds a single row/entity of data from the "database".
+ */
 public class ItemEntity {
     private String name;
     private String description;

@@ -36,6 +36,11 @@ public class ItemControllerTest {
                 .andExpect(content().string(equalTo("{\"response\":\"Greetings!\"}")));
     }
 
+    /**
+     * Tests the items list controller that returns the item list to ensure it returns JSON and that it contains
+     * at least one of the expected items.
+     * @throws Exception
+     */
     @Test
     public void itemListTest() throws Exception {
         for(int i = 0; i<itemService.getSurgeTrigger(); i++)
@@ -45,9 +50,5 @@ public class ItemControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("Frog leg")))
                 .andExpect(content().string(startsWith("[")));
-
-        System.err.println(status());
-
-        System.out.println(content());
     }
 }

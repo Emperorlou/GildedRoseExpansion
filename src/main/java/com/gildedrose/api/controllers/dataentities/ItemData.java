@@ -1,5 +1,12 @@
 package com.gildedrose.api.controllers.dataentities;
 
+
+/**
+ * This class is essentially identical to the ItemEntity, which seems redundant, but in a real
+ * production scenario they would often be separate classes. This also allows us to assign meaning
+ * to returning one or the other class since the ItemData fields (namely price), unlike ItemEntity,
+ * has the true price built in and not just the "base" price.
+ */
 public class ItemData {
     private String name;
     private String description;

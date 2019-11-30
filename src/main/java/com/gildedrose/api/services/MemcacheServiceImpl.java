@@ -12,7 +12,7 @@ import java.util.Map;
  *
  * Note1: Using a pool to store the MemcacheItem classes for reuse would make this class more GC efficient.
  * Note2: I recognize that this will generate a memory leak as old entries are not purged after they expire unless
- * they're code explicitly calls get() on them.
+ * the code explicitly calls get() on them. As this is just a quick implementation for the test, I'm leaving it as-is.
  */
 @Service
 public class MemcacheServiceImpl implements MemcacheService {
@@ -21,7 +21,7 @@ public class MemcacheServiceImpl implements MemcacheService {
     public MemcacheServiceImpl() { }
 
     /**
-     * Stores a value in the cache expires by default in 1 hour.
+     * Stores a value in the cache with a default expiry of 1 hour.
      *
      * @param key
      * @param value
@@ -52,8 +52,7 @@ public class MemcacheServiceImpl implements MemcacheService {
      * @param key
      * @return
      */
-    public Object get(String key)
-    {
+    public Object get(String key) {
         MemcacheItem item = cache.get(key);
 
         if (item==null) return null;

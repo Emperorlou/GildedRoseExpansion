@@ -1,7 +1,6 @@
 package com.gildedrose.api.services;
 
 import com.gildedrose.api.controllers.dataentities.ItemData;
-import com.gildedrose.api.dbentities.ItemEntity;
 
 import java.util.Collection;
 
@@ -14,13 +13,17 @@ public interface ItemService {
      */
     Collection<ItemData> fetchAllItems_ForUserView();
 
+    int getSurgeRange();
+
+    void setSurgeRange(int seconds);
+
     int getSurgeTrigger();
 
     boolean isSurgeDetected();
 
-    int getCurrentHourViewCount();
+    int getCurrentSurgeRangeViewCount();
 
-    int getPreviousHourViewCount();
+    int getPreviousSurgeRangeViewCount();
 
     ItemData getItemByName(String itemName);
 
