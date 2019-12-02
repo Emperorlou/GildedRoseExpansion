@@ -19,7 +19,7 @@ public class ItemServiceImpl implements ItemService {
     public static final String MC_PREFIX_SURGE_RANGE_INDEX = "surgerangeindex-";
     private static Map<String, ItemEntity> items = new HashMap<>();
 
-    int surgeRange = 3600;  // Default surge range is 1 hour
+    int surgePeriod = 3600;  // Default surge period is 1 hour
 
     @Autowired
     MemcacheService memcache;
@@ -42,6 +42,10 @@ public class ItemServiceImpl implements ItemService {
     public ItemServiceImpl() {
     }
 
+    /**
+     * This constructor is used in tests.
+     * @param memcache
+     */
     ItemServiceImpl(MemcacheService memcache)
     {
         this.memcache = memcache;
@@ -72,21 +76,37 @@ public class ItemServiceImpl implements ItemService {
     }
 
     /**
-     * The time range that we are looking for a surge in viewing traffic.
-     * @return Seconds
+     * This is half of the time period we want to monitor for a surge and it is used
+     * when monitoring view counts. View counts are tracked "per range". For example,
+     * if the period we want to monitor for surges is 1 hour then the range is 30 minutes
+     * and the view counts we care about are the 3 most recent ranges. For more details on why
+     * it is done this way, see this class's javadoc.
+     * @return
      */
-    @Override
     public int getSurgeRange() {
-        return surgeRange;
+        return surgePeriod/2;
     }
 
     /**
-     * Adjusting the surge range is used in tests.
+     * The time period that we are looking for a surge in viewing traffic.
+     * @return Seconds
+     */
+    @Override
+    public int getSurgePeriod() {
+        return surgePeriod;
+    }
+
+    /**
+     * Adjusting the surge period is used in tests.
+     *
+     * The number of seconds used cannot be lower than 2 or an IllegalArgumentException will be thrown.
+     *
      * @param seconds
      */
     @Override
-    public void setSurgeRange(int seconds) {
-        this.surgeRange = seconds;
+    public void setSurgePeriod(int seconds) {
+        if (seconds<2) throw new IllegalArgumentException("Surge period cannot be set lower than 2.");
+        this.surgePeriod = seconds;
     }
 
     /**
@@ -111,9 +131,12 @@ public class ItemServiceImpl implements ItemService {
      * @return True if a surge is currently detected as in progress.
      */
     @Override
-    public boolean isSurgeDetected() {
+    public boolean isSurgeDetected(long currentTimeMs) {
         int surgeTrigger = getSurgeTrigger();
-        return (getCurrentSurgeRangeViewCount()>surgeTrigger || getPreviousSurgeRangeViewCount()>surgeTrigger);
+        boolean period1Surge = (getSurgeRangeViewCount(currentTimeMs, 0) + getSurgeRangeViewCount(currentTimeMs, -1)>surgeTrigger);
+        boolean period2Surge = (getSurgeRangeViewCount(currentTimeMs, -1) + getSurgeRangeViewCount(currentTimeMs, -2)>surgeTrigger);
+
+        return (period1Surge || period2Surge);
     }
 
     /**
@@ -123,24 +146,12 @@ public class ItemServiceImpl implements ItemService {
      * @return Number of views
      */
     @Override
-    public int getCurrentSurgeRangeViewCount() {
-        Integer count = (Integer)memcache.get(MC_PREFIX_SURGE_RANGE_INDEX + getCurrentRangeIndex());
+    public int getSurgeRangeViewCount(long currentTimeMs, int relativeRangeIndex) {
+        Integer count = (Integer)memcache.get(MC_PREFIX_SURGE_RANGE_INDEX + (getCurrentRangeIndex(currentTimeMs)+relativeRangeIndex));
         if (count==null) return 0;
         return count;
     }
 
-    /**
-     * Similar to the {@link #getCurrentSurgeRangeViewCount()} method, but this variant will return
-     * the number of views in the previous surge-range. For example, if the current time is 4:30pm and
-     * the surge range is set to 1 hour, then this method will tell us how many views were seen between 3pm and 4pm.
-     * @return
-     */
-    @Override
-    public int getPreviousSurgeRangeViewCount() {
-        Integer count = (Integer)memcache.get(MC_PREFIX_SURGE_RANGE_INDEX + (getCurrentRangeIndex()-1));
-        if (count==null) return 0;
-        return count;
-    }
 
     /**
      * Fetches an item from our "database" by ID (name in this case).
@@ -166,7 +177,7 @@ public class ItemServiceImpl implements ItemService {
 
         int price = dbItem.getPrice();
 
-        if (isSurgeDetected())
+        if (isSurgeDetected(System.currentTimeMillis()))
             price = (int)Math.round(((double)price)*getSurgePriceMultiplier());
 
         return new ItemData(dbItem.getName(),dbItem.getDescription(), price);
@@ -178,8 +189,8 @@ public class ItemServiceImpl implements ItemService {
      * that have passed until 4pm since epoch.
      * @return The current range index (aka the current hour) since epoch
      */
-    long getCurrentRangeIndex() {
-        return System.currentTimeMillis()/(getSurgeRange()*1000);
+    long getCurrentRangeIndex(long currentTimeMs) {
+        return currentTimeMs/(getSurgeRange()*1000);
     }
 
     /**
@@ -189,9 +200,10 @@ public class ItemServiceImpl implements ItemService {
      * of what that means)
      */
     void flagItemsViewed() {
-        int count = getCurrentSurgeRangeViewCount();
+        long currentTimeMs = System.currentTimeMillis();
+        int count = getSurgeRangeViewCount(currentTimeMs, 0);
         count++;
-        memcache.put(MC_PREFIX_SURGE_RANGE_INDEX + getCurrentRangeIndex(), count);
+        memcache.put(MC_PREFIX_SURGE_RANGE_INDEX + getCurrentRangeIndex(currentTimeMs), count);
     }
 
 }

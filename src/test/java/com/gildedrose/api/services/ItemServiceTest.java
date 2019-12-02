@@ -23,15 +23,17 @@ public class ItemServiceTest {
     {
         ItemService itemService = new ItemServiceImpl(new MemcacheServiceImpl());
 
+        long currentTimeMs = System.currentTimeMillis();
+
         ((ItemServiceImpl)itemService).flagItemsViewed();
-        assertEquals(1, itemService.getCurrentSurgeRangeViewCount());
-        assertEquals(false, itemService.isSurgeDetected());
+        assertEquals(1, itemService.getSurgeRangeViewCount(currentTimeMs, 0));
+        assertEquals(false, itemService.isSurgeDetected(currentTimeMs));
 
         for(int i = 0; i<itemService.getSurgeTrigger(); i++)
             ((ItemServiceImpl)itemService).flagItemsViewed();
 
-        assertEquals(itemService.getSurgeTrigger()+1, itemService.getCurrentSurgeRangeViewCount());
-        assertEquals(true, itemService.isSurgeDetected());
+        assertEquals(itemService.getSurgeTrigger()+1, itemService.getSurgeRangeViewCount(currentTimeMs, 0));
+        assertEquals(true, itemService.isSurgeDetected(currentTimeMs));
     }
 
     /**
@@ -42,31 +44,27 @@ public class ItemServiceTest {
     public void surgeCompleteTest()
     {
         ItemService itemService = new ItemServiceImpl(new MemcacheServiceImpl());
-        itemService.setSurgeRange(1);
+        itemService.setSurgePeriod(2);  // Setting the surge period to 2 seconds (default is 1 hour) to simplify things for the test
 
-        assertEquals(false, itemService.isSurgeDetected());
+        long currentTimeMs = System.currentTimeMillis();
+
+        assertEquals(false, itemService.isSurgeDetected(currentTimeMs));
 
         for(int i = 0; i<itemService.getSurgeTrigger()+1; i++)
             ((ItemServiceImpl)itemService).flagItemsViewed();
 
-        assertEquals(itemService.getSurgeTrigger()+1, itemService.getCurrentSurgeRangeViewCount());
-        assertEquals(true, itemService.isSurgeDetected());
+        assertEquals(itemService.getSurgeTrigger()+1, itemService.getSurgeRangeViewCount(currentTimeMs, 0));
+        assertEquals(true, itemService.isSurgeDetected(currentTimeMs));
 
-        try {
-            Thread.sleep(1001);
-        } catch (InterruptedException e) {
-            throw new RuntimeException("Cancelled");
-        }
+        // Here time is passing but not enough to untrigger the surge detection
+        currentTimeMs += 1000;
 
-        assertEquals(true, itemService.isSurgeDetected());
+        assertEquals(true, itemService.isSurgeDetected(currentTimeMs));
 
-        try {
-            Thread.sleep(1001);
-        } catch (InterruptedException e) {
-            throw new RuntimeException("Cancelled");
-        }
+        // Here time would pass enough to untrigger the surge
+        currentTimeMs += 2000;
 
-        assertEquals(false, itemService.isSurgeDetected());
+        assertEquals(false, itemService.isSurgeDetected(currentTimeMs));
     }
 
 

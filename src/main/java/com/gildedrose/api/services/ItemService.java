@@ -13,17 +13,15 @@ public interface ItemService {
      */
     Collection<ItemData> fetchAllItems_ForUserView();
 
-    int getSurgeRange();
+    int getSurgePeriod();
 
-    void setSurgeRange(int seconds);
+    void setSurgePeriod(int seconds);
 
     int getSurgeTrigger();
 
-    boolean isSurgeDetected();
+    boolean isSurgeDetected(long currentTimeMs);
 
-    int getCurrentSurgeRangeViewCount();
-
-    int getPreviousSurgeRangeViewCount();
+    int getSurgeRangeViewCount(long currentTimeMs, int relativeRangeIndex);
 
     ItemData getItemByName(String itemName);
 
