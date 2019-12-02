@@ -9,6 +9,19 @@ a memcache system that I'm used to from the GCP, which is essentially a super fa
 store with expiry dates on the values. I decided to quickly write a mock class that would do
 this as it allowed me to simplify the test and not require further dependencies. 
 
+##Running the binary
+You can run the server jar (double click in windows) located in 
+`\release\gildedrose-expansion-0.1.0.jar` if you'd rather not build it from scratch. You can 
+then hit all the endpoints if you go to `localhost:8080` in your browser with the specific 
+resources detailed at the end of this readme.
+
+##Building from sources
+The project uses Maven so calling `mvn package` from the root folder should build the project
+for you. Then simply running the jar (double click in windows) located in 
+`\target\gildedrose-expansion-0.1.0.jar` will run the project. You can then hit all the endpoints
+if you go to `localhost:8080` in your browser with the specific resources detailed at the 
+end of this readme.
+
 # Authentication
 I briefly considered rolling my own authentication system since this is a simple test but I
 opted to go with a solution that would more likely be represented in a real product. 
